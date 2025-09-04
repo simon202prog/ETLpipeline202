@@ -1,0 +1,71 @@
+services:
+  airflow:
+    build:
+      context: ./Docker-Images
+      dockerfile: Airflow-image/Dockerfile
+    image: etl-airflow:2.8.0
+    container_name: etl-airflow
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__EXECUTOR: "SequentialExecutor"
+    volumes:
+      - ./dags:/opt/airflow/dags
+    ports:
+      - "8080:8080"
+    command: airflow standalone
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:RELEASE.2025-02-18T16-25-55Z
+    restart: always
+    container_name: etl-minio
+    volumes:
+      - ./data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9090:9000"
+      - "9001:9001"
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.4
+    container_name: etl-clickhouse
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse-logs:/var/log/clickhouse-server
+      - clickhouse-data:/var/lib/clickhouse
+    restart: unless-stopped
+
+  spark:
+    build:
+      context: ./Docker-Images
+      dockerfile: Spark-image/Dockerfile
+    image: etl-spark:3.3
+    container_name: etl-spark
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    volumes:
+      - ./spark_jobs:/home/jovyan/work
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - S3_ENDPOINT=http://minio:9000
+      - S3_BUCKET=${S3_BUCKET}
+      - SPARK_EXTRA_CLASSPATH=/usr/local/spark/jars/hadoop-aws-3.3.2.jar:/usr/local/spark/jars/aws-java-sdk-bundle-1.12.262.jar
+      - JAVA_TOOL_OPTIONS=-Dcom.amazonaws.services.s3.enableV4=true -Dcom.amazonaws.sdk.disableCertChecking=true
+    restart: unless-stopped
+
+volumes:
+  clickhouse-logs:
+  clickhouse-data:
