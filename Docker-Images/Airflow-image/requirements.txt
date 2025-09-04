@@ -1,0 +1,7 @@
+apache-airflow-providers-postgres
+apache-airflow-providers-http
+apache-airflow-providers-docker
+apache-airflow-providers-ssh
+apache-airflow-providers-apache-spark
+apache-airflow-providers-amazon
+clickhouse-driver
