@@ -5,3 +5,5 @@ apache-airflow-providers-ssh
 apache-airflow-providers-apache-spark
 apache-airflow-providers-amazon
 clickhouse-driver
+boto3
+requests
