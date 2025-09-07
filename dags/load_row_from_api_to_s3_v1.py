@@ -32,8 +32,8 @@ def get_query_for_day(**context):
         endpoint_url="http://minio:9000"
     )
 
-    bucket = "raw-layer"
-    key = f"earthquake/{(exec_date - timedelta(days=1)).strftime('%Y/%m/%d')}.json"
+    bucket = "data-lake"
+    key = f"earthquake/row/{(exec_date - timedelta(days=1)).strftime('%Y/%m/%d')}.json"
 
     s3.put_object(Bucket=bucket, Key=key, Body=json_bytes)  
 
